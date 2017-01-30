@@ -1,0 +1,22 @@
+extends:
+  - eslint-config-airbnb-base
+env:
+  browser: true
+  node: false
+  mocha: true
+rules:
+  func-names: 0
+  prefer-arrow-callback: 0
+  no-unused-expressions: 0
+  padded-blocks: 0
+  max-len: [2, 120]
+  comma-dangle: [2, never]
+  no-multiple-empty-lines:
+    - 2
+    -
+     max: 1
+  import/no-named-as-default: 0
+  import/no-extraneous-dependencies:
+    - 2
+    -
+      devDependencies: true

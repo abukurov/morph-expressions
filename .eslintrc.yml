@@ -1,0 +1,18 @@
+extends:
+  - eslint-config-airbnb-base
+env:
+  es6: true
+  browser: true
+  node: false
+parserOptions:
+  ecmaVersion: 6
+  sourceType: module
+rules:
+  max-len: [2, 120]
+  comma-dangle: [2, never]
+  no-use-before-define: 0
+  no-multiple-empty-lines:
+    - 2
+    -
+     max: 1
+  import/no-named-as-default: 0

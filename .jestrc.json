@@ -1,0 +1,5 @@
+{
+  "automock": false,
+  "transformIgnorePatterns": ["./node_modules"],
+  "testPathIgnorePatterns": ["./__tests__/helpers", "./node_modules"]
+}

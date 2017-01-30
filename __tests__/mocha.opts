@@ -1,0 +1,5 @@
+--recursive
+--reporter spec
+--ui bdd
+--timeout 30000
+--require mocha-steps

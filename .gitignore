@@ -1,0 +1,6 @@
+.project
+.idea/
+dist
+coverage
+node_modules
+*.log
