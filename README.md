@@ -1,7 +1,11 @@
 # morph-expressions
 
 [![Build Status](https://travis-ci.org/abukurov/morph-expressions.svg?branch=master)](https://travis-ci.org/abukurov/morph-expressions)
-[![Coverage Status](https://coveralls.io/repos/github/abukurov/morph-expressions/badge.svg?branch=feature%2Frefactor-parser)](https://coveralls.io/github/abukurov/morph-expressions?branch=feature%2Frefactor-parser)
+[![Coverage Status](https://coveralls.io/repos/github/abukurov/morph-expressions/badge.svg?branch=master)](https://coveralls.io/github/abukurov/morph-expressions?branch=master)
+[![David](https://img.shields.io/david/abukurov/morph-expressions.svg)]()
+[![npm](https://img.shields.io/npm/dt/morph-expressions.svg)](https://www.npmjs.com/package/morph-expressions)
+[![MIT](https://img.shields.io/npm/l/morph-expressions.svg)](https://github.com/abukurov/morph-expressions/blob/master/LICENSE.md)
+[![NPM Version](https://img.shields.io/npm/v/morph-expressions.svg)](https://www.npmjs.com/package/morph-expressions)
 
 An extremely efficient and flexible parser for Math or Logical expression using Javascript. It has all the basic functions supported with extensive support for new functions, variable etc.
 

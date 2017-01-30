@@ -7,7 +7,8 @@
     "lint": "eslint src specs",
     "build": "npm run clean && babel ./src --presets babel-preset-es2015 --out-dir ./dist",
     "clean": "rimraf ./dist ./tmp",
-    "test": "npm run lint && jest --no-cache --config ./.jestrc.json --coverage && cat ./coverage/lcov.info | coveralls",
+    "test": "npm run lint && jest --no-cache --config ./.jestrc.json --coverage",
+    "test:publish": "coveralls < coverage/lcov.info && rimraf coverage",
     "prepublish": "npm run lint && npm test && npm run build",
     "precommit": "npm test",
     "prepush": "npm test"
@@ -18,7 +19,10 @@
   },
   "keywords": [
     "dsl",
+    "compiler",
+    "translator",
     "expression",
+    "expressions",
     "parser",
     "lexer",
     "parse",
@@ -32,7 +36,7 @@
     "evaluator"
   ],
   "author": "Alex Bukurov",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/abukurov/morph-expressions/issues"
   },
