@@ -20,6 +20,18 @@ export default class Parser {
     delete this.functions[name];
   }
 
+  registerProperty(name, handler) {
+    if (this.properties[name]) {
+      throw new SyntaxError(`Property '${name}' has already been declared`);
+    }
+
+    this.properties[name] = handler;
+  }
+
+  unRegisterProperty(name) {
+    delete this.properties[name];
+  }
+
   parse(expression) {
     const options = { identifiers: [] };
     const tokenizer = new Tokenizer(expression);
