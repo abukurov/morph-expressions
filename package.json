@@ -7,11 +7,11 @@
     "lint": "eslint src specs",
     "build": "npm run clean && babel ./src --presets babel-preset-es2015 --out-dir ./dist",
     "clean": "rimraf ./dist ./tmp",
-    "test": "npm run lint && jest --no-cache --config ./.jestrc.json --coverage",
+    "test": "jest --no-cache --config ./.jestrc.json --coverage",
     "test:publish": "coveralls < coverage/lcov.info && rimraf coverage",
     "prepublish": "npm run lint && npm test && npm run build",
-    "precommit": "npm test",
-    "prepush": "npm test"
+    "precommit": "npm run lint && npm test",
+    "prepush": "npm run lint && npm test"
   },
   "repository": {
     "type": "git",

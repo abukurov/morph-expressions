@@ -11,6 +11,7 @@ export default class TokenType {
 }
 
 export const types = {
+  EOF: '@type/eof',
   CONSTANT: '@type/constant',
   IDENTIFIER: '@type/identifier',
   LOGICAL_EQUALITY: '@type/logical-equality',

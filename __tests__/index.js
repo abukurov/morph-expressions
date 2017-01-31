@@ -18,6 +18,7 @@ describe('Morph expressions', function () {
         expect(parser.parseAndEval('0')).to.equal(0);
         expect(parser.parseAndEval('5')).to.equal(5);
         expect(parser.parseAndEval('5.4')).to.equal(5.4);
+        expect(parser.parseAndEval('.4')).to.equal(.4);
         expect(parser.parseAndEval('005.4')).to.equal(5.4);
         expect(parser.parseAndEval('005.400')).to.equal(5.4);
         expect(parser.parseAndEval('2.')).to.equal(2);
@@ -26,8 +27,7 @@ describe('Morph expressions', function () {
 
     describe('when number is not valid', function () {
       it('should throw an SyntaxError', function () {
-        expect(() => parser.parseAndEval('.')).to.throw(SyntaxError);
-        expect(() => parser.parseAndEval('3.2.1')).to.throw(SyntaxError);
+        expect(() => parser.parseAndEval('3.2.1')).to.throw(SyntaxError, 'Invalid number \'3.2.1\'');
       });
     });
   });
@@ -42,10 +42,10 @@ describe('Morph expressions', function () {
 
     describe('when string is not valid', function () {
       it('should throw an SyntaxError', function () {
-        expect(() => parser.parseAndEval('"string')).to.throw(SyntaxError);
-        expect(() => parser.parseAndEval('string"')).to.throw(SyntaxError);
-        expect(() => parser.parseAndEval('\'string"')).to.throw(SyntaxError);
-        expect(() => parser.parseAndEval('"string\'')).to.throw(SyntaxError);
+        expect(() => parser.parseAndEval('"string')).to.throw(SyntaxError, 'Unterminated quote "');
+        expect(() => parser.parseAndEval('string"')).to.throw(SyntaxError, 'Unterminated quote "');
+        expect(() => parser.parseAndEval('\'string"')).to.throw(SyntaxError, 'Unterminated quote \'');
+        expect(() => parser.parseAndEval('"string\'')).to.throw(SyntaxError, 'Unterminated quote "');
       });
     });
   });
@@ -103,6 +103,7 @@ describe('Morph expressions', function () {
 
       it('should eval in precedence order', function () {
         expect(parser.parseAndEval('2 * -2')).to.equal(-4);
+        expect(parser.parseAndEval('-2 * 2')).to.equal(-4);
       });
     });
 
@@ -114,6 +115,7 @@ describe('Morph expressions', function () {
 
       it('should eval in precedence order', function () {
         expect(parser.parseAndEval('2 / -2')).to.equal(-1);
+        expect(parser.parseAndEval('-2 / 2')).to.equal(-1);
       });
     });
 
@@ -124,6 +126,7 @@ describe('Morph expressions', function () {
 
       it('should eval in precedence order', function () {
         expect(parser.parseAndEval('5 % -2')).to.equal(1);
+        expect(parser.parseAndEval('-5 % 2')).to.equal(-1);
       });
     });
 
@@ -135,6 +138,7 @@ describe('Morph expressions', function () {
 
       it('should eval in precedence order', function () {
         expect(parser.parseAndEval('true == 2 > 1')).to.be.true;
+        expect(parser.parseAndEval('2 > 1 == true')).to.be.true;
       });
     });
 
@@ -146,6 +150,7 @@ describe('Morph expressions', function () {
 
       it('should eval in precedence order', function () {
         expect(parser.parseAndEval('true != 1 > 2')).to.be.true;
+        expect(parser.parseAndEval('1 > 2 != true')).to.be.true;
       });
     });
 
@@ -158,6 +163,7 @@ describe('Morph expressions', function () {
 
       it('should eval in precedence order', function () {
         expect(parser.parseAndEval('1 > 2 - 3')).to.be.true;
+        expect(parser.parseAndEval('4 - 2 > 1')).to.be.true;
       });
     });
 
@@ -182,6 +188,7 @@ describe('Morph expressions', function () {
 
       it('should eval in precedence order', function () {
         expect(parser.parseAndEval('1 < 2 - 1')).to.be.false;
+        expect(parser.parseAndEval('5 - 3 < 3')).to.be.true;
       });
     });
 
@@ -194,6 +201,7 @@ describe('Morph expressions', function () {
 
       it('should eval in precedence order', function () {
         expect(parser.parseAndEval('1 <= 2 - 1')).to.be.true;
+        expect(parser.parseAndEval('2 - 1 <= 1')).to.be.true;
       });
     });
 
@@ -267,6 +275,19 @@ describe('Morph expressions', function () {
         parser.unRegisterFunction('constant');
         parser.unRegisterFunction('sum');
       });
+      
+      it('should throw an SyntaxError when function has been already declared', function () {
+        expect(() => parser.registerFunction('sqr', value => value * value))
+          .to.throw(SyntaxError, 'Function \'sqr\' has already been declared');
+      });
+
+      it('should throw an ReferenceError when function has not been already declared', function () {
+        expect(() => parser.parseAndEval('fooBar()')).to.throw(ReferenceError, 'Function \'fooBar\' isn\'t declared');
+      });
+
+      it('should throw an SyntaxError when function does not contains close parentheses', function () {
+        expect(() => parser.parseAndEval('sqr(2')).to.throw(SyntaxError, 'Unexpected end of expression');
+      });
 
       it('should parse and eval function without parameters', function () {
         expect(parser.parseAndEval('constant()')).to.equal('constant');
@@ -287,7 +308,7 @@ describe('Morph expressions', function () {
 
     describe('when function definition does not contains close parentheses', function () {
       it('should throw an SyntaxError', function () {
-        expect(() => parser.parseAndEval('unRegistered(')).to.throw(SyntaxError);
+        expect(() => parser.parseAndEval('unRegistered(')).to.throw(SyntaxError, 'Unexpected end of expression');
       });
     });
   });
@@ -300,16 +321,14 @@ describe('Morph expressions', function () {
       expect(parser.parseAndEval('(2 + 1) * 3')).to.equal(9);
     });
 
-    describe('when expression does not contains close parentheses', function () {
-      it('should throw an SyntaxError', function () {
-        expect(() => parser.parseAndEval('3 * (1 + 2')).to.throw(SyntaxError);
-      });
+    it('should throw an SyntaxError when expression does not contains close parentheses', function () {
+      expect(() => parser.parseAndEval('3 * (1 + 2')).to.throw(SyntaxError, 'Unexpected end of expression');
     });
 
-    describe('when expression does not contains open parentheses', function () {
-      it('should throw an SyntaxError', function () {
-        expect(() => parser.parseAndEval('1 + 2)')).to.throw(SyntaxError);
-      });
+    it('should throw an SyntaxError when expression does not contains open parentheses', function () {
+      expect(() => parser.parseAndEval('1 + 2)')).to.throw(SyntaxError, 'Unexpected end of expression');
+      expect(() => parser.parseAndEval('(1 + 2)) - 2')).to.throw(SyntaxError, 'Unexpected end of expression');
+      expect(() => parser.parseAndEval(')')).to.throw(SyntaxError, 'Unexpected end of expression');
     });
   });
 });
