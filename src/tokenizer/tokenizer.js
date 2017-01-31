@@ -123,7 +123,7 @@ export default class Tokenizer {
     const [match, handler] = TOKENIZERS.find(tokenizer => tokenizer[0](ch)) || [];
 
     if (!handler) {
-      throw new SyntaxError(`Unknown character at ${this.pos}`);
+      throw new SyntaxError(`Unknown character '${ch}'`);
     }
 
     const token = handler(this.input, this.pos);

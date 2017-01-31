@@ -5,6 +5,10 @@ const expect = chai.expect;
 const parser = new Parser();
 
 describe('Morph expressions', function () {
+  it('should throw an SyntaxError when expression contains invalid symbol', function () {
+    expect(() => parser.parseAndEval('~')).to.throw(SyntaxError, 'Unknown character \'~\'');
+  });
+
   describe('constant', function () {
     it('should parse predefined constants', function () {
       expect(parser.parseAndEval('true')).to.be.true;
@@ -18,7 +22,7 @@ describe('Morph expressions', function () {
         expect(parser.parseAndEval('0')).to.equal(0);
         expect(parser.parseAndEval('5')).to.equal(5);
         expect(parser.parseAndEval('5.4')).to.equal(5.4);
-        expect(parser.parseAndEval('.4')).to.equal(.4);
+        expect(parser.parseAndEval('.4')).to.equal(0.4);
         expect(parser.parseAndEval('005.4')).to.equal(5.4);
         expect(parser.parseAndEval('005.400')).to.equal(5.4);
         expect(parser.parseAndEval('2.')).to.equal(2);
@@ -275,7 +279,7 @@ describe('Morph expressions', function () {
         parser.unRegisterFunction('constant');
         parser.unRegisterFunction('sum');
       });
-      
+
       it('should throw an SyntaxError when function has been already declared', function () {
         expect(() => parser.registerFunction('sqr', value => value * value))
           .to.throw(SyntaxError, 'Function \'sqr\' has already been declared');
@@ -310,6 +314,25 @@ describe('Morph expressions', function () {
       it('should throw an SyntaxError', function () {
         expect(() => parser.parseAndEval('unRegistered(')).to.throw(SyntaxError, 'Unexpected end of expression');
       });
+    });
+  });
+
+  describe('computed properties', function () {
+    beforeEach(function () {
+      parser.registerProperty('foo', () => 'foo');
+    });
+
+    afterEach(function () {
+      parser.unRegisterProperty('foo');
+    });
+
+    it('should throw an SyntaxError when property has been already declared', function () {
+      expect(() => parser.registerProperty('foo', () => 'bar'))
+        .to.throw(SyntaxError, 'Property \'foo\' has already been declared');
+    });
+
+    it('should parse and eval computed property', function () {
+      expect(parser.parseAndEval('foo')).to.equal('foo');
     });
   });
 

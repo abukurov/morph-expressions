@@ -25,8 +25,12 @@ export function createConstantNode(constant) {
  * @return {Function} compiled node
  * @private
  */
-function createIdentifierNode(propertyName) {
-  return scope => get(scope, propertyName);
+function createIdentifierNode(name) {
+  return (scope, opts) => {
+    const property = get(opts.properties, name);
+
+    return property ? property(scope) : get(scope, name);
+  };
 }
 
 /**
