@@ -27,7 +27,7 @@ function readString(expression, index) {
   while (expression.charAt(current) !== ch) {
     current += 1;
     if (current > expression.length) {
-      throw new SyntaxError(`Unterminated quote ${ch} at ${start}`);
+      throw new SyntaxError(`Unterminated quote ${ch}`);
     }
   }
 
@@ -49,7 +49,7 @@ function readNumber(expression, index) {
   const number = Number(lexeme);
 
   if (isNaN(number)) {
-    throw new SyntaxError(`Invalid number at ${start}`);
+    throw new SyntaxError(`Invalid number '${lexeme}'`);
   }
 
   return new TokenType(types.CONSTANT, lexeme, number);
@@ -88,39 +88,50 @@ function readKeyword(expression, index) {
 
 const TOKENIZERS = [
   [isQuotes, readString],
-  [isDigit, readNumber],
+  [isNumber, readNumber],
   [isIdentifierStart, readIdentifier]
 ];
 
-function getNextToken(expression, index) {
-  const keyword = readKeyword(expression, index);
-  const ch = expression.charAt(index);
-
-  if (keyword) {
-    return keyword;
+export default class Tokenizer {
+  constructor(input) {
+    this.input = input;
+    this.pos = 0;
+    this.skipToken();
   }
 
-  const found = TOKENIZERS.find(([match]) => match(ch));
-  const evaluate = found && found[1];
+  skipToken() {
+    if (this.pos >= this.input.length) {
+      this.finishToken(new TokenType(types.EOF, '', null));
+      return this;
+    }
 
-  if (!evaluate) {
-    throw new SyntaxError(`Unknown character at ${index}`);
+    this.pos += skipWhitespaces(this.input, this.pos);
+
+    this.readToken();
+    return this;
   }
 
-  return evaluate(expression, index);
-}
+  readToken() {
+    const ch = this.input.charAt(this.pos);
+    const keywordToken = readKeyword(this.input, this.pos);
 
-export default function tokenize(expression) {
-  const tokens = [];
-  let index = 0;
+    if (keywordToken) {
+      return this.finishToken(keywordToken);
+    }
 
-  while (index < expression.length) {
-    index += skipWhitespaces(expression, index);
-    const token = getNextToken(expression, index);
+    // eslint-disable-next-line no-unused-vars
+    const [match, handler] = TOKENIZERS.find(tokenizer => tokenizer[0](ch)) || [];
 
-    tokens.push(token);
-    index += token.lexeme.length;
+    if (!handler) {
+      throw new SyntaxError(`Unknown character at ${this.pos}`);
+    }
+
+    const token = handler(this.input, this.pos);
+    return this.finishToken(token);
   }
 
-  return tokens;
+  finishToken(token) {
+    this.token = token;
+    this.pos += token.lexeme.length;
+  }
 }

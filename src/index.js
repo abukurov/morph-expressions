@@ -1,4 +1,5 @@
-import tokenize from './tokenizer/tokenize';
+import Tokenizer from './tokenizer/tokenizer';
+import { types } from './tokenizer/types';
 import createAbstractSyntaxTree from './abstract-syntax-tree';
 
 export default class Parser {
@@ -9,7 +10,7 @@ export default class Parser {
 
   registerFunction(name, handler) {
     if (this.functions[name]) {
-      throw new Error(`Function ${name} already registered`);
+      throw new SyntaxError(`Function '${name}' has already been declared`);
     }
 
     this.functions[name] = handler;
@@ -21,10 +22,10 @@ export default class Parser {
 
   parse(expression) {
     const options = { identifiers: [] };
-    const tokens = tokenize(expression);
-    const compiled = createAbstractSyntaxTree(tokens, options);
+    const tokenizer = new Tokenizer(expression);
+    const compiled = createAbstractSyntaxTree(tokenizer, options);
 
-    if (tokens.length !== 0) {
+    if (!tokenizer.token.match(types.EOF)) {
       throw new SyntaxError('Unexpected end of expression');
     }
 

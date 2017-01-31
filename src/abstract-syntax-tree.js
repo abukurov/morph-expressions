@@ -6,18 +6,9 @@ import { types } from './tokenizer/types';
  * @private
  */
 function get(resource, path) {
-  const parts = path.split('.');
-  let current = resource;
+  const [head, ...tail] = path.split('.');
 
-  parts.forEach((part) => {
-    if (part in current) {
-      return (current = current[part]);
-    }
-
-    return false;
-  });
-
-  return current;
+  return resource && head ? get(resource[head], tail.join('.')) : resource;
 }
 
 /**
@@ -54,7 +45,7 @@ function createOperatorNode(operand, nodes = []) {
     const operator = get(opts.functions, operand);
 
     if (!operator) {
-      throw new ReferenceError(`Unregistered function ${operand}`);
+      throw new ReferenceError(`Function '${operand}' isn't declared`);
     }
 
     return operator(...args);
@@ -66,14 +57,11 @@ function createOperatorNode(operand, nodes = []) {
  * @return {Function} compiled node
  * @private
  */
-function processLogicalOr(tokens, scope) {
-  let node = processLogicalAnd(tokens, scope);
-  let token = tokens[0];
+function processLogicalOr(tokenizer, scope) {
+  let node = processLogicalAnd(tokenizer, scope);
 
-  while (token && token.match(types.LOGICAL_OR)) {
-    tokens.shift();
-    node = createOperatorNode(token.value, [node, processLogicalAnd(tokens, scope)]);
-    token = tokens[0];
+  while (tokenizer.token.match(types.LOGICAL_OR)) {
+    node = createOperatorNode(tokenizer.token.value, [node, processLogicalAnd(tokenizer.skipToken(), scope)]);
   }
 
   return node;
@@ -84,14 +72,11 @@ function processLogicalOr(tokens, scope) {
  * @return {Function} compiled node
  * @private
  */
-function processLogicalAnd(tokens, scope) {
-  let node = processLogicalEquality(tokens, scope);
-  let token = tokens[0];
+function processLogicalAnd(tokenizer, scope) {
+  let node = processLogicalEquality(tokenizer, scope);
 
-  while (token && token.match(types.LOGICAL_AND)) {
-    tokens.shift();
-    node = createOperatorNode(token.value, [node, processLogicalEquality(tokens, scope)]);
-    token = tokens[0];
+  while (tokenizer.token.match(types.LOGICAL_AND)) {
+    node = createOperatorNode(tokenizer.token.value, [node, processLogicalEquality(tokenizer.skipToken(), scope)]);
   }
 
   return node;
@@ -102,14 +87,11 @@ function processLogicalAnd(tokens, scope) {
  * @return {Function} compiled node
  * @private
  */
-function processLogicalEquality(tokens, scope) {
-  let node = processLogicalCondition(tokens, scope);
-  let token = tokens[0];
+function processLogicalEquality(tokenizer, scope) {
+  let node = processLogicalCondition(tokenizer, scope);
 
-  while (token && token.match(types.LOGICAL_EQUALITY)) {
-    tokens.shift();
-    node = createOperatorNode(token.value, [node, processLogicalCondition(tokens, scope)]);
-    token = tokens[0];
+  while (tokenizer.token.match(types.LOGICAL_EQUALITY)) {
+    node = createOperatorNode(tokenizer.token.value, [node, processLogicalCondition(tokenizer.skipToken(), scope)]);
   }
 
   return node;
@@ -120,14 +102,11 @@ function processLogicalEquality(tokens, scope) {
  * @return {Function} compiled node
  * @private
  */
-function processLogicalCondition(tokens, scope) {
-  let node = processAddSubtract(tokens, scope);
-  let token = tokens[0];
+function processLogicalCondition(tokenizer, scope) {
+  let node = processAddSubtract(tokenizer, scope);
 
-  while (token && token.match(types.LOGICAL_CONDITION)) {
-    tokens.shift();
-    node = createOperatorNode(token.value, [node, processAddSubtract(tokens, scope)]);
-    token = tokens[0];
+  while (tokenizer.token.match(types.LOGICAL_CONDITION)) {
+    node = createOperatorNode(tokenizer.token.value, [node, processAddSubtract(tokenizer.skipToken(), scope)]);
   }
 
   return node;
@@ -138,14 +117,11 @@ function processLogicalCondition(tokens, scope) {
  * @return {Function} compiled node
  * @private
  */
-function processAddSubtract(tokens, scope) {
-  let node = processMultiplyDivide(tokens, scope);
-  let token = tokens[0];
+function processAddSubtract(tokenizer, scope) {
+  let node = processMultiplyDivide(tokenizer, scope);
 
-  while (token && token.match(types.ADD_SUBTRACT)) {
-    tokens.shift();
-    node = createOperatorNode(token.value, [node, processMultiplyDivide(tokens, scope)]);
-    token = tokens[0];
+  while (tokenizer.token.match(types.ADD_SUBTRACT)) {
+    node = createOperatorNode(tokenizer.token.value, [node, processMultiplyDivide(tokenizer.skipToken(), scope)]);
   }
 
   return node;
@@ -154,16 +130,13 @@ function processAddSubtract(tokens, scope) {
 /**
  * Process math Multiply, Divide or Modulus operators
  * @return {Function} compiled node
- * @private
+ * @privateR
  */
-function processMultiplyDivide(tokens, scope) {
-  let node = processUnary(tokens, scope);
-  let token = tokens[0];
+function processMultiplyDivide(tokenizer, scope) {
+  let node = processUnary(tokenizer, scope);
 
-  while (token && token.match(types.MULTIPLY_DIVIDE)) {
-    tokens.shift();
-    node = createOperatorNode(token.value, [node, processUnary(tokens, scope)]);
-    token = tokens[0];
+  while (tokenizer.token.match(types.MULTIPLY_DIVIDE)) {
+    node = createOperatorNode(tokenizer.token.value, [node, processUnary(tokenizer.skipToken(), scope)]);
   }
 
   return node;
@@ -174,24 +147,21 @@ function processMultiplyDivide(tokens, scope) {
  * @return {Function} compiled node
  * @private
  */
-function processUnary(tokens, scope) {
-  const token = tokens[0];
+function processUnary(tokenizer, scope) {
   const unaryAddSubtract = {
     '-': value => -value,
     '+': value => value
   };
 
-  if (token && token.match(types.ADD_SUBTRACT)) {
-    tokens.shift();
-    return createOperatorNode(unaryAddSubtract[token.lexeme], [processUnary(tokens, scope)]);
+  if (tokenizer.token.match(types.ADD_SUBTRACT)) {
+    return createOperatorNode(unaryAddSubtract[tokenizer.token.lexeme], [processUnary(tokenizer.skipToken(), scope)]);
   }
 
-  if (token && (token.match(types.INCREASE_DECREASE) || token.match(types.LOGICAL_NEGATION))) {
-    tokens.shift();
-    return createOperatorNode(token.value, [processUnary(tokens, scope)]);
+  if (tokenizer.token.match(types.INCREASE_DECREASE) || tokenizer.token.match(types.LOGICAL_NEGATION)) {
+    return createOperatorNode(tokenizer.token.value, [processUnary(tokenizer.skipToken(), scope)]);
   }
 
-  return processIdentifiers(tokens, scope);
+  return processIdentifiers(tokenizer, scope);
 }
 
 /**
@@ -199,47 +169,39 @@ function processUnary(tokens, scope) {
  * @return {Function} compiled node
  * @private
  */
-function processIdentifiers(tokens, scope) {
-  let token = tokens[0];
+function processIdentifiers(tokenizer, scope) {
   let params = [];
 
-  if (token && token.match(types.IDENTIFIER)) {
-    const identifier = token.value;
+  if (tokenizer.token.match(types.IDENTIFIER)) {
+    const identifier = tokenizer.token.value;
 
-    tokens.shift();
-    token = tokens[0];
+    tokenizer.skipToken();
 
-    if (!(token && token.match(types.OPEN_PARENTHESES))) {
+    if (!tokenizer.token.match(types.OPEN_PARENTHESES)) {
       scope.identifiers.push(identifier);
 
       return createIdentifierNode(identifier);
     }
 
     params = [];
-    tokens.shift();
-    token = tokens[0];
+    tokenizer.skipToken();
+    if (!tokenizer.token.match(types.CLOSE_PARENTHESES)) {
+      params.push(processLogicalOr(tokenizer, scope));
 
-    if (!(token && token.match(types.CLOSE_PARENTHESES))) {
-      params.push(processLogicalOr(tokens, scope));
-      token = tokens[0];
-
-      while (token && token.match(types.DELIMITER)) {
-        tokens.shift();
-        params.push(processLogicalOr(tokens, scope));
-        token = tokens[0];
+      while (tokenizer.token.match(types.DELIMITER)) {
+        params.push(processLogicalOr(tokenizer.skipToken(), scope));
       }
     }
 
-    token = tokens[0];
-    if (!token && token.match(types.CLOSE_PARENTHESES)) {
-      throw new SyntaxError('Parenthesis ) expected');
+    if (!tokenizer.token.match(types.CLOSE_PARENTHESES)) {
+      throw new SyntaxError('Unexpected end of expression');
     }
 
-    tokens.shift();
+    tokenizer.skipToken();
     return createOperatorNode(identifier, params);
   }
 
-  return processConstants(tokens, scope);
+  return processConstants(tokenizer, scope);
 }
 
 /**
@@ -247,15 +209,14 @@ function processIdentifiers(tokens, scope) {
  * @return {Function} compiled node
  * @private
  */
-function processConstants(tokens, scope) {
-  const token = tokens[0];
-
-  if (token && token.match(types.CONSTANT)) {
-    tokens.shift();
-    return createConstantNode(token.value);
+function processConstants(tokenizer, scope) {
+  if (tokenizer.token.match(types.CONSTANT)) {
+    const node = createConstantNode(tokenizer.token.value);
+    tokenizer.skipToken();
+    return node;
   }
 
-  return processParentheses(tokens, scope);
+  return processParentheses(tokenizer, scope);
 }
 
 /**
@@ -263,23 +224,19 @@ function processConstants(tokens, scope) {
  * @return {Function} compiled node
  * @private
  */
-function processParentheses(tokens = [], scope) {
-  let token = tokens[0];
-
-  if (token && token.match(types.CLOSE_PARENTHESES)) {
+function processParentheses(tokenizer, scope) {
+  if (tokenizer.token.match(types.CLOSE_PARENTHESES)) {
     throw new SyntaxError('Unexpected end of expression');
   }
 
-  if (token && token.match(types.OPEN_PARENTHESES)) {
-    tokens.shift();
-    const node = processLogicalOr(tokens, scope);
-    token = tokens[0];
+  if (tokenizer.token.match(types.OPEN_PARENTHESES)) {
+    const node = processLogicalOr(tokenizer.skipToken(), scope);
 
-    if (!(token && token.match(types.CLOSE_PARENTHESES))) {
+    if (!tokenizer.token.match(types.CLOSE_PARENTHESES)) {
       throw new SyntaxError('Unexpected end of expression');
     }
 
-    tokens.shift();
+    tokenizer.skipToken();
     return node;
   }
 
