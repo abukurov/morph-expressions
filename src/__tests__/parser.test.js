@@ -1,5 +1,5 @@
 import chai from 'chai';
-import Parser from '../src';
+import Parser from '../parser';
 
 const expect = chai.expect;
 const parser = new Parser();

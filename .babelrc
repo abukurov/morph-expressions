@@ -1,3 +1,5 @@
 {
-  "presets": ["es2015"]
+  "presets": [
+    "./build/preset-es2015"
+  ]
 }
