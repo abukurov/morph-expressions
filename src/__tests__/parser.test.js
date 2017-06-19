@@ -22,7 +22,6 @@ describe('Morph expressions', function () {
         expect(parser.parseAndEval('0')).to.equal(0);
         expect(parser.parseAndEval('5')).to.equal(5);
         expect(parser.parseAndEval('5.4')).to.equal(5.4);
-        expect(parser.parseAndEval('.4')).to.equal(0.4);
         expect(parser.parseAndEval('005.4')).to.equal(5.4);
         expect(parser.parseAndEval('005.400')).to.equal(5.4);
         expect(parser.parseAndEval('2.')).to.equal(2);
@@ -251,17 +250,33 @@ describe('Morph expressions', function () {
   });
 
   describe('variables', function () {
-    describe('when variable is defined', function () {
+    describe('when variable is valid', function () {
       it('should parse variable', function () {
         expect(parser.parseAndEval('x', { x: 5 })).to.equal(5);
       });
 
       it('should parse nested variable', function () {
-        expect(parser.parseAndEval('x.y', { x: { y: 5 } })).to.equal(5);
+        const scope = {
+          x: { y: 5 },
+          foo: { bar: [4, 5, 6] }
+        };
+
+        expect(parser.parseAndEval('x.y', scope)).to.equal(5);
+        expect(parser.parseAndEval('x["y"]', scope)).to.equal(5);
+
+        expect(parser.parseAndEval('foo.bar.1', scope)).to.equal(5);
+        expect(parser.parseAndEval('foo.bar[1]', scope)).to.equal(5);
       });
 
       it('should return list of used variables', function () {
         expect(parser.parse('x.y + z').identifiers).to.deep.equal(['x.y', 'z']);
+      });
+    });
+
+    describe('when variable declaration is not valid', function () {
+      it('should throw an SyntaxError', function () {
+        expect(() => parser.parseAndEval('foo[1')).to.throw(SyntaxError, 'Closing square bracket expected');
+        expect(() => parser.parseAndEval('foo[x+y]')).to.throw(SyntaxError, 'Object keys can only be constants');
       });
     });
   });

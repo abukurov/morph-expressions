@@ -1,5 +1,6 @@
 /* eslint-env node */
 
+const path = require('path');
 const webpack = require('webpack');
 
 const production = process.env.NODE_ENV === 'production';
@@ -23,7 +24,7 @@ module.exports = {
   entry: require.resolve('./src/index.js'),
 
   output: {
-    path: './dist',
+    path: path.join(__dirname, 'dist'),
     filename: `morph-expression${production ? '.min' : ''}.js`,
     library: 'Parser',
     libraryTarget: 'umd'
