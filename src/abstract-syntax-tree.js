@@ -177,9 +177,31 @@ function processIdentifiers(tokenizer, scope) {
   let params = [];
 
   if (tokenizer.token.match(types.IDENTIFIER)) {
-    const identifier = tokenizer.token.value;
+    const keys = [tokenizer.token.value];
 
     tokenizer.skipToken();
+
+    while (tokenizer.token.match(types.DOT, types.OPEN_SQUARE_BRACKET)) {
+      const token = tokenizer.token;
+
+      tokenizer.skipToken();
+      if (!tokenizer.token.match(types.CONSTANT)) {
+        throw new SyntaxError('Object keys can only be constants');
+      }
+
+      keys.push(tokenizer.token.value);
+      tokenizer.skipToken();
+
+      if (token.match(types.OPEN_SQUARE_BRACKET)) {
+        if (!tokenizer.token.match(types.CLOSE_SQUARE_BRACKET)) {
+          throw new SyntaxError('Closing square bracket expected');
+        }
+
+        tokenizer.skipToken();
+      }
+    }
+
+    const identifier = keys.join('.');
 
     if (!tokenizer.token.match(types.OPEN_PARENTHESES)) {
       scope.identifiers.push(identifier);
@@ -216,7 +238,9 @@ function processIdentifiers(tokenizer, scope) {
 function processConstants(tokenizer, scope) {
   if (tokenizer.token.match(types.CONSTANT)) {
     const node = createConstantNode(tokenizer.token.value);
+
     tokenizer.skipToken();
+
     return node;
   }
 
