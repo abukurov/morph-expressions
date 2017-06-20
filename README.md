@@ -34,6 +34,7 @@ compiled.eval({ x: 2, y: 3 }); // returns true
 //Or
 
 parser.parseAndEval('x + 1 - y == 0', { x: 2, y: 3 });  // returns true
+parser.parseAndEval('foo.bar[1] == 5', { foo: { bar: [4, 5, 6] } });  // returns true
 ```
 
 For register the custom function or computed properties

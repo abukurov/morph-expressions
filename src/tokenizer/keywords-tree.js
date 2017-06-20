@@ -2,6 +2,8 @@ import TokenType, { types } from './types';
 import LexemeTree from './lexeme-tree';
 
 const KEYWORDS = [
+  new TokenType(types.DOT, '.', true),
+
   new TokenType(types.CONSTANT, 'true', true),
   new TokenType(types.CONSTANT, 'false', false),
 
@@ -29,6 +31,9 @@ const KEYWORDS = [
 
   new TokenType(types.OPEN_PARENTHESES, '(', null),
   new TokenType(types.CLOSE_PARENTHESES, ')', null),
+
+  new TokenType(types.OPEN_SQUARE_BRACKET, '[', null),
+  new TokenType(types.CLOSE_SQUARE_BRACKET, ']', null),
 
   new TokenType(types.DELIMITER, ',', null),
   new TokenType(types.DELIMITER, ';', null)
