@@ -257,15 +257,17 @@ describe('Morph expressions', function () {
 
       it('should parse nested variable', function () {
         const scope = {
-          x: { y: 5 },
-          foo: { bar: [4, 5, 6] }
+          users: [{
+            profile: {
+              addresses: ['foo', 'bar']
+            }
+          }]
         };
 
-        expect(parser.parseAndEval('x.y', scope)).to.equal(5);
-        expect(parser.parseAndEval('x["y"]', scope)).to.equal(5);
-
-        expect(parser.parseAndEval('foo.bar.1', scope)).to.equal(5);
-        expect(parser.parseAndEval('foo.bar[1]', scope)).to.equal(5);
+        expect(parser.parseAndEval('users.0.profile.addresses.1', scope)).to.equal('bar');
+        expect(parser.parseAndEval('users[0]["profile"]["addresses"][1]', scope)).to.equal('bar');
+        expect(parser.parseAndEval('users[0].profile["addresses"][1]', scope)).to.equal('bar');
+        expect(parser.parseAndEval('users[0].profile.addresses[1]', scope)).to.equal('bar');
       });
 
       it('should return list of used variables', function () {
@@ -276,7 +278,7 @@ describe('Morph expressions', function () {
     describe('when variable declaration is not valid', function () {
       it('should throw an SyntaxError', function () {
         expect(() => parser.parseAndEval('foo[1')).to.throw(SyntaxError, 'Closing square bracket expected');
-        expect(() => parser.parseAndEval('foo[x+y]')).to.throw(SyntaxError, 'Object keys can only be constants');
+        expect(() => parser.parseAndEval('foo[x+y]')).to.throw(SyntaxError, 'Unexpected object key notation');
       });
     });
   });
