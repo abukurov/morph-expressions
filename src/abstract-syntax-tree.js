@@ -185,8 +185,16 @@ function processIdentifiers(tokenizer, scope) {
       const token = tokenizer.token;
 
       tokenizer.skipToken();
-      if (!tokenizer.token.match(types.CONSTANT)) {
-        throw new SyntaxError('Object keys can only be constants');
+
+      const isValidKey = token.match(types.OPEN_SQUARE_BRACKET) ?
+        tokenizer.token.match(types.CONSTANT) :
+        (
+          (tokenizer.token.match(types.CONSTANT) && (typeof tokenizer.token.value === 'number')) ||
+          tokenizer.token.match(types.IDENTIFIER)
+        );
+
+      if (!isValidKey) {
+        throw new SyntaxError('Unexpected object key notation');
       }
 
       keys.push(tokenizer.token.value);
